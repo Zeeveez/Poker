@@ -2,6 +2,8 @@
 //
 
 #include "Game.h"
+#include "Deck.h"
+#include "Hand.h"
 #include <iostream>
 
 
@@ -27,6 +29,18 @@ int main()
     std::cout << R"(#    \  /                                 |______| |_|    |_|      \_/ || \_/  #)" << "\n";
     std::cout << R"(#     \/                                                              /__\     #)" << "\n";
     std::cout << R"(################################################################################)" << "\n";
-    Poker::Game game(4);
-    game.Start();
+    //Poker::Game game(4);
+    //game.Start();
+    Poker::Deck deck;
+    Poker::Hand hand;
+    int c = 0;
+    for (int i = 0; i < 1000000; i++) {
+        hand.Draw(deck, 7);
+        if (hand.Score().first == Poker::Hand::Type::STRAIGHT) {
+            c++;
+        }
+        hand.Discard(deck);
+    }
+    std::cout << 1.0*c/100000;
+
 }

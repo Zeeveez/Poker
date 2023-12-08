@@ -55,7 +55,7 @@ namespace Poker {
         cards = {};
     }
 
-    std::pair<Hand::Type, std::vector<Card::Rank>>  Hand::Score() const {
+    std::pair<Hand::Type, std::vector<Card::Rank>> Hand::Score() const {
 
         auto straightFlushResults = StraightFlush();
         if (straightFlushResults.first) {
@@ -102,7 +102,6 @@ namespace Poker {
 
     // ----------------------------  Private  ----------------------------
     std::pair<bool, Card::Rank> Hand::StraightFlush() const {
-        // T
         static const std::uint64_t STRAIGHT_FLUSH = 0b00000000000000000000000000000000000000000000000000011111;
         static const std::uint64_t STRAIGHT_FLUSH_LOW_ACE = 0b0000000000000000000000000000000000000000000000000001000000001111;
 
@@ -114,7 +113,7 @@ namespace Poker {
         for (uint64_t rankOffset = 0; rankOffset < 9; rankOffset++) {
             for (uint64_t suit = static_cast<uint64_t>(Card::Suit::CLUBS); suit <= static_cast<uint64_t>(Card::Suit::SPADES); suit++) {
                 if ((hand & (STRAIGHT_FLUSH << 13 * suit + 8 - rankOffset)) == (STRAIGHT_FLUSH << 13 * suit + 8 - rankOffset)) {
-                    return { true, static_cast<Card::Rank>(static_cast<int>(Card::Rank::SIX) + 8 - rankOffset) };
+                    return { true, static_cast<Card::Rank>(static_cast<int>(Card::Rank::ACE) - rankOffset) };
                 }
             }
         }
@@ -172,7 +171,7 @@ namespace Poker {
                 }
                 std::sort(std::begin(ranks), std::end(ranks), [](Card::Rank& a, Card::Rank& b) {
                     return static_cast<int>(a) > static_cast<int>(b);
-                    });
+                          });
                 return { true, { ranks[0], ranks[1], ranks[2], ranks[3], ranks[4] } };
             }
         }
@@ -180,21 +179,20 @@ namespace Poker {
     }
 
     std::pair<bool, Card::Rank> Hand::Straight() const {
-        std::vector<int> counts = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }; // _,_,2,3,4,5,6,7,8,9,X,J,Q,K,A
-        for (auto& card : cards) { counts[static_cast<std::size_t>(card.rank)]++; }
-        counts[1] = counts[counts.size() - 1]; // _,A,2,3,4,5,6,7,8,9,X,J,Q,K,A
+        static const std::uint16_t STRAIGHT = 0b0000000000011111;
+        static const std::uint16_t STRAIGHT_LOW_ACE = 0b0001000000001111;
 
-        for (std::size_t i = counts.size() - 1; i >= 4; i--) {
-            bool straight = true;
-            for (std::size_t j = 0; j < 5; j++) {
-                if (!counts[i - j]) {
-                    straight = false;
-                    break;
-                }
+        uint16_t hand = 0;
+        for (auto& card : cards) {
+            hand |= (uint16_t)1 << (static_cast<int>(card.rank) - static_cast<int>(Card::Rank::TWO));
+        }
+        for (uint16_t rankOffset = 0; rankOffset < 9; rankOffset++) {
+            if ((hand & (STRAIGHT << rankOffset)) == (STRAIGHT << rankOffset)) {
+                return { true, static_cast<Card::Rank>(static_cast<int>(Card::Rank::ACE) - rankOffset) };
             }
-            if (straight) {
-                return { true, static_cast<Card::Rank>(i) };
-            }
+        }
+        if ((hand & STRAIGHT_LOW_ACE) == STRAIGHT_LOW_ACE) {
+            return { true, Card::Rank::FIVE };
         }
         return { false, Card::Rank::ACE };
     }
@@ -264,7 +262,7 @@ namespace Poker {
         for (auto& card : cards) { kickers.push_back(card.rank); }
         std::sort(std::begin(kickers), std::end(kickers), [](Card::Rank& a, Card::Rank& b) {
             return static_cast<int>(a) > static_cast<int>(b);
-            });
+                  });
         return kickers;
     }
 
